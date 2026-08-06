@@ -155,6 +155,176 @@ type TrackingItem = {
   icon: typeof Fingerprint;
 };
 
+type CookieEvidence = {
+  name: string;
+  value: string;
+  meaning: string;
+};
+
+type TrackerEndpoint = {
+  id: string;
+  host: string;
+  endpoint: string;
+  provider: string;
+  category: 'Advertising' | 'Analytics' | 'Customer data';
+  purpose: string;
+  known: boolean;
+  cookies: CookieEvidence[];
+  dataUsed: string[];
+  seenAt: string;
+};
+
+const trackerProviders = [
+  {
+    match: (host: string) => /(^|\.)connect\.facebook\.net$|(^|\.)facebook\.com$/.test(host),
+    provider: 'Meta Pixel',
+    category: 'Advertising' as const,
+    purpose: 'Ad measurement, conversion attribution, and audience matching',
+    cookieMeaning: (name: string) => name === '_fbp' ? 'Meta browser identifier used for ad measurement' : name === 'fr' ? 'Meta advertising and session identifier' : 'Meta identifier used by this destination',
+  },
+  {
+    match: (host: string) => /(^|\.)google-analytics\.com$|(^|\.)analytics\.google\.com$|(^|\.)googletagmanager\.com$/.test(host),
+    provider: 'Google Analytics',
+    category: 'Analytics' as const,
+    purpose: 'Page analytics, visitor recognition, and event measurement',
+    cookieMeaning: (name: string) => name === '_ga' ? 'Long-lived Google Analytics client identifier' : name === '_gid' ? 'Short-lived Google Analytics visitor identifier' : name === '_gat' ? 'Google Analytics request-rate control cookie' : 'Google measurement identifier',
+  },
+  {
+    match: (host: string) => /(^|\.)segment\.com$/.test(host),
+    provider: 'Segment',
+    category: 'Customer data' as const,
+    purpose: 'Collecting and routing behavioral events to other analytics and marketing tools',
+    cookieMeaning: (name: string) => name.includes('anonymous') ? 'Segment anonymous visitor identifier' : name.includes('user') ? 'Segment account or user identifier' : 'Segment tracking identifier',
+  },
+  {
+    match: (host: string) => /(^|\.)ads-twitter\.com$|(^|\.)twitter\.com$|(^|\.)x\.com$/.test(host),
+    provider: 'X Ads',
+    category: 'Advertising' as const,
+    purpose: 'Ad conversion measurement, attribution, and personalization',
+    cookieMeaning: (name: string) => name === 'personalization_id' ? 'X advertising personalization identifier' : 'X advertising or session identifier',
+  },
+  {
+    match: (host: string) => /(^|\.)doubleclick\.net$|(^|\.)googleadservices\.com$/.test(host),
+    provider: 'Google Ads',
+    category: 'Advertising' as const,
+    purpose: 'Ad delivery, conversion measurement, and cross-site advertising',
+    cookieMeaning: (name: string) => name === 'IDE' ? 'DoubleClick advertising identifier' : 'Google advertising cookie',
+  },
+];
+
+function trackerProvider(host: string) {
+  return trackerProviders.find((provider) => provider.match(host));
+}
+
+function decodeCookieValue(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function cookieMeaning(name: string, provider?: ReturnType<typeof trackerProvider>) {
+  if (provider) return provider.cookieMeaning(name);
+  if (name === '_ga') return 'Google Analytics client identifier';
+  if (name === '_fbp') return 'Meta browser identifier';
+  if (name === 'IDE') return 'DoubleClick advertising identifier';
+  return 'Cookie value observed in an outbound request';
+}
+
+function sampleTrackerEndpoints(): TrackerEndpoint[] {
+  return [
+    {
+      id: 'meta-pixel',
+      host: 'connect.facebook.net',
+      endpoint: 'https://www.facebook.com/tr/?id=1849201&ev=PageView&dl=https%3A%2F%2Fnewsroom.example%2Farticle%2Fquiet-machines',
+      provider: 'Meta Pixel',
+      category: 'Advertising',
+      purpose: 'Ad measurement, conversion attribution, and audience matching',
+      known: true,
+      cookies: [
+        { name: '_fbp', value: 'fb.1.1728394021.1849201123', meaning: 'Meta browser identifier used for ad measurement' },
+        { name: 'fr', value: '0aK3mP9xQ2…', meaning: 'Meta advertising and session identifier' },
+      ],
+      dataUsed: ['Page URL', 'PageView event', 'Browser/device signals', 'Referrer'],
+      seenAt: 'just now',
+    },
+    {
+      id: 'google-analytics',
+      host: 'analytics.google.com',
+      endpoint: 'https://analytics.google.com/g/collect?v=2&tid=G-7K3M2Q1&en=page_view&dl=https%3A%2F%2Fnewsroom.example',
+      provider: 'Google Analytics',
+      category: 'Analytics',
+      purpose: 'Page analytics, visitor recognition, and event measurement',
+      known: true,
+      cookies: [
+        { name: '_ga', value: 'GA1.1.84201933.1728394021', meaning: 'Long-lived Google Analytics client identifier' },
+        { name: '_gid', value: 'GA1.1.92108321.1728480412', meaning: 'Short-lived Google Analytics visitor identifier' },
+      ],
+      dataUsed: ['Page URL', 'Page title', 'Screen size', 'Engagement timestamp'],
+      seenAt: '12 sec ago',
+    },
+    {
+      id: 'segment',
+      host: 'cdn.segment.com',
+      endpoint: 'https://api.segment.io/v1/t?writeKey=pk_live_…&anonymousId=61b3…b729',
+      provider: 'Segment',
+      category: 'Customer data',
+      purpose: 'Collecting and routing behavioral events to other analytics and marketing tools',
+      known: true,
+      cookies: [
+        { name: 'ajs_anonymous_id', value: '61b3f2c1-7b1e-4f31-b729', meaning: 'Segment anonymous visitor identifier' },
+      ],
+      dataUsed: ['Anonymous ID', 'Page URL', 'Event name', 'Referrer'],
+      seenAt: '31 sec ago',
+    },
+  ];
+}
+
+function buildTrackerEndpoints(snapshot: LiveSnapshot['snapshot'] | null, liveMode: boolean): TrackerEndpoint[] {
+  if (!liveMode || !snapshot) return sampleTrackerEndpoints();
+  const grouped = new Map<string, TrackerEndpoint>();
+  for (const request of snapshot.requests || []) {
+    const provider = trackerProvider(request.host);
+    const cookies = request.signals?.cookies || [];
+    const query = request.signals?.query || [];
+    const body = request.signals?.body || [];
+    const context = request.signals?.context || [];
+    if (!provider && !cookies.length && !query.length && !body.length && !context.length) continue;
+    const id = `${request.host}${request.path}`;
+    const current = grouped.get(id);
+    const cookieEvidence = cookies.map((cookie) => ({
+      name: cookie.name,
+      value: decodeCookieValue(cookie.value),
+      meaning: cookieMeaning(cookie.name, provider),
+    }));
+    const dataUsed = [
+      ...query.map((item) => item.name),
+      ...body.map((item) => item.name),
+      ...context.map((item) => item.name),
+    ].filter(Boolean);
+    const endpoint: TrackerEndpoint = {
+      id,
+      host: request.host,
+      endpoint: request.url,
+      provider: provider?.provider || 'Unclassified tracker',
+      category: provider?.category || 'Analytics',
+      purpose: provider?.purpose || 'This destination carried identifying or behavioral data; no provider match was found.',
+      known: Boolean(provider),
+      cookies: cookieEvidence,
+      dataUsed: [...new Set(dataUsed)].slice(0, 10),
+      seenAt: request.timestamp ? new Date(request.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'recently',
+    };
+    if (!current) grouped.set(id, endpoint);
+    else {
+      current.cookies = [...new Map([...current.cookies, ...cookieEvidence].map((cookie) => [cookie.name, cookie])).values()];
+      current.dataUsed = [...new Set([...current.dataUsed, ...dataUsed])].slice(0, 10);
+      current.endpoint = request.url || current.endpoint;
+    }
+  }
+  return [...grouped.values()].slice(0, 12);
+}
+
 function valueFromSignals(signals: LiveSnapshot['snapshot']['pageSignals'], name: string) {
   return signals?.filter((signal) => signal.name === name).at(-1)?.value || '';
 }
@@ -472,6 +642,89 @@ function TrackingProfile({ items }: { items: TrackingItem[] }) {
   );
 }
 
+function TrackerEndpointPanel({ endpoints }: { endpoints: TrackerEndpoint[] }) {
+  const [expanded, setExpanded] = useState<string | null>(endpoints[0]?.id || null);
+
+  return (
+    <section className="endpoint-panel panel" aria-label="Known ad and tracking endpoints">
+      <div className="endpoint-header">
+        <div>
+          <div className="data-heading profile-heading">
+            <h4>Known ad &amp; tracking endpoints</h4>
+            <span>{endpoints.length} destinations with tracking evidence</span>
+          </div>
+          <p className="profile-intro">Provider matches are based on the destination host. Cookie values are shown exactly as observed, with sensitive values clipped only when the browser did not expose the full value.</p>
+        </div>
+        <div className="endpoint-confidence"><ShieldCheck size={13} /> Provider match ≠ proof of every use</div>
+      </div>
+      {endpoints.length ? (
+        <div className="endpoint-list">
+          {endpoints.map((endpoint) => {
+            const isOpen = expanded === endpoint.id;
+            return (
+              <div className={`endpoint-row ${isOpen ? 'open' : ''}`} key={endpoint.id}>
+                <button
+                  type="button"
+                  className="endpoint-summary"
+                  onClick={() => setExpanded(isOpen ? null : endpoint.id)}
+                  aria-expanded={isOpen}
+                  data-testid={`button-endpoint-${endpoint.id}`}
+                >
+                  <div className={`endpoint-mark ${endpoint.category.toLowerCase().replace(' ', '-')}`}>{endpoint.host.replace(/^www\./, '').charAt(0).toUpperCase()}</div>
+                  <div className="endpoint-main">
+                    <div className="endpoint-title-line">
+                      <strong>{endpoint.provider}</strong>
+                      <span className={`endpoint-category ${endpoint.category.toLowerCase().replace(' ', '-')}`}>{endpoint.category}</span>
+                      {!endpoint.known && <span className="endpoint-category unknown">Unclassified</span>}
+                    </div>
+                    <div className="endpoint-host">{endpoint.host}</div>
+                    <div className="endpoint-purpose">{endpoint.purpose}</div>
+                  </div>
+                  <div className="endpoint-time">{endpoint.seenAt}</div>
+                  <ChevronDown size={14} className={`signal-expand ${isOpen ? 'open' : ''}`} />
+                </button>
+                {isOpen && (
+                  <div className="endpoint-detail">
+                    <div className="endpoint-url-block">
+                      <span className="endpoint-detail-label">Exact endpoint observed</span>
+                      <code>{endpoint.endpoint}</code>
+                    </div>
+                    <div className="endpoint-evidence-grid">
+                      <div>
+                        <span className="endpoint-detail-label">Data used</span>
+                        <div className="data-chip-list">
+                          {endpoint.dataUsed.length ? endpoint.dataUsed.map((field) => <span className="data-chip" key={field}>{field}</span>) : <span className="evidence-empty">No named fields exposed</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="endpoint-detail-label">Cookies sent to this endpoint</span>
+                        {endpoint.cookies.length ? (
+                          <div className="cookie-table">
+                            <div className="cookie-table-head"><span>Name</span><span>Observed value</span><span>What it likely means</span></div>
+                            {endpoint.cookies.map((cookie) => (
+                              <div className="cookie-table-row" key={`${endpoint.id}-${cookie.name}`}>
+                                <code>{cookie.name}</code>
+                                <code>{cookie.value || '[empty]'}</code>
+                                <span>{cookie.meaning}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : <span className="evidence-empty">No Cookie header observed for this endpoint</span>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="endpoint-empty"><Cookie size={18} /><strong>No tracking endpoint evidence yet</strong><span>Keep capture on while the page loads. Tracker Lens will show recognized providers when it sees their destinations or cookies.</span></div>
+      )}
+    </section>
+  );
+}
+
 function FingerprintIcon() {
   return <span style={{ display: 'grid', placeItems: 'center', width: 14, height: 14, color: 'hsl(var(--muted-foreground))' }}><span style={{ width: 10, height: 10, border: '1px solid currentColor', borderRadius: '50%', borderBottomColor: 'transparent' }} /></span>;
 }
@@ -490,6 +743,7 @@ function Dashboard({ captureOn, onToggle, liveSnapshot, liveMode }: { captureOn:
   const destinationCount = liveMode ? stats?.thirdParty || 0 : 23;
   const signalCount = liveMode ? (stats?.withCookies || 0) + (stats?.withContext || 0) : 47;
   const trackingItems = useMemo(() => buildTrackingProfile(liveSnapshot, liveMode), [liveSnapshot, liveMode]);
+  const trackerEndpoints = useMemo(() => buildTrackerEndpoints(liveSnapshot, liveMode), [liveSnapshot, liveMode]);
 
   useEffect(() => {
     if (selectedRequest && selectedRequest.id !== selected) setSelected(selectedRequest.id);
@@ -530,6 +784,8 @@ function Dashboard({ captureOn, onToggle, liveSnapshot, liveMode }: { captureOn:
         </div>
         <div className="section-title-row animate-rise delay-2"><div className="section-title">Tracking profile</div><div className="section-note">select a signal to see how it is exposed</div></div>
         <div className="animate-rise delay-3"><TrackingProfile items={trackingItems} /></div>
+        <div className="section-title-row animate-rise delay-3"><div className="section-title">Evidence by destination</div><div className="section-note">provider, endpoint, fields, and cookie values</div></div>
+        <div className="animate-rise delay-3"><TrackerEndpointPanel endpoints={trackerEndpoints} /></div>
       </div>
     </main>
   );

@@ -20,10 +20,15 @@ The interface is intentionally tracking-only. It presents a profile of data that
 - Language, preferred languages, timezone, and Do Not Track state.
 - Page URL, title, description, form count, and input count.
 - Cookies and identifier names observed in outbound headers.
+- Exact cookie values observed for each recognized endpoint, alongside a plain-language interpretation of what the cookie is commonly used for.
 - Referrer and origin context.
 - Location permission requests and returned coordinates when a page calls the Geolocation API.
 
 Individual network requests are used internally to collect evidence, but they are not shown in the user-facing readout.
+
+## Provider matching
+
+Tracker Lens recognizes common hosts for Meta Pixel, Google Analytics, Google Ads, Segment, and X Ads. A match is a host-based classification, not a guarantee of every purpose or data use. Unknown destinations carrying identifying data are labeled **Unclassified tracker** instead of being silently assigned to a provider.
 
 Data is held in the extension service worker's bounded session memory. Turning capture off clears captured data. The extension does not send observations to a remote server.
 
