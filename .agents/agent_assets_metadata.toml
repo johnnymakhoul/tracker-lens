@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "bQNIVyElm8evpauu6CSbN"
+uri = "file://tracker-lens-extension.zip"
+type = "unspecified"
+title = "Tracker Lens browser extension"
+description = "Built Chrome/Edge Manifest V3 extension package. Load the unzipped dist/public folder from chrome://extensions, or unzip this package first."

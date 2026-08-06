@@ -1,0 +1,1 @@
+- [Tracker Lens privacy boundary](tracker-lens-privacy.md) — capture stays local and bounded; any future sync must be explicit opt-in.

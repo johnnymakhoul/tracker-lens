@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Tracker Lens",
+  "version": "0.1.0",
+  "description": "See the actual data websites send to third-party destinations.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "webRequest",
+    "cookies"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Tracker Lens",
+    "default_popup": "index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content-script.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "page-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
+  "options_page": "index.html"
+}
