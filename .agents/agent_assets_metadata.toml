@@ -5,5 +5,5 @@ generated = []
 id = "bQNIVyElm8evpauu6CSbN"
 uri = "file://tracker-lens-extension.zip"
 type = "unspecified"
-title = "Tracker Lens with endpoint evidence"
-description = "Chrome/Edge extension showing recognized ad and tracking providers, exact observed endpoints, data fields used, and cookie names, values, and likely meanings."
+title = "Tracker Lens — wide evidence-only view"
+description = "Chrome/Edge extension package that opens a wide destination evidence view showing recognized tracking providers, exact endpoints, data fields, and cookie values."

@@ -5,6 +5,10 @@ const tabs = new Map();
 const pendingRequests = new Map();
 let captureEnabled = true;
 
+chrome.action.onClicked.addListener(() => {
+  chrome.runtime.openOptionsPage();
+});
+
 chrome.storage.session.get({ captureEnabled: true }, (result) => {
   captureEnabled = result.captureEnabled !== false;
 });

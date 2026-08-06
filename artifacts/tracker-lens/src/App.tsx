@@ -729,71 +729,19 @@ function FingerprintIcon() {
   return <span style={{ display: 'grid', placeItems: 'center', width: 14, height: 14, color: 'hsl(var(--muted-foreground))' }}><span style={{ width: 10, height: 10, border: '1px solid currentColor', borderRadius: '50%', borderBottomColor: 'transparent' }} /></span>;
 }
 
-function Dashboard({ captureOn, onToggle, liveSnapshot, liveMode }: { captureOn: boolean; onToggle: () => void; liveSnapshot: LiveSnapshot['snapshot'] | null; liveMode: boolean }) {
-  const [range, setRange] = useState('24 hours');
-  const [selected, setSelected] = useState(requests[0].id);
-  const [query, setQuery] = useState('');
-  const liveRequests = useMemo(() => (liveSnapshot?.requests || []).map(mapLiveRequest), [liveSnapshot]);
-  const displayedRequests = liveMode ? liveRequests : requests;
-  const selectedRequest = displayedRequests.find((request) => request.id === selected) || displayedRequests[0];
-  const blocked = displayedRequests.filter((request) => request.status === 'blocked').length;
-  const stats = liveSnapshot?.stats;
-  const currentHost = liveSnapshot?.page?.host || 'newsroom.example';
-  const observedCount = liveMode ? stats?.total || 0 : 148;
-  const destinationCount = liveMode ? stats?.thirdParty || 0 : 23;
-  const signalCount = liveMode ? (stats?.withCookies || 0) + (stats?.withContext || 0) : 47;
-  const trackingItems = useMemo(() => buildTrackingProfile(liveSnapshot, liveMode), [liveSnapshot, liveMode]);
+function Dashboard({ liveSnapshot, liveMode }: { liveSnapshot: LiveSnapshot['snapshot'] | null; liveMode: boolean }) {
   const trackerEndpoints = useMemo(() => buildTrackerEndpoints(liveSnapshot, liveMode), [liveSnapshot, liveMode]);
-
-  useEffect(() => {
-    if (selectedRequest && selectedRequest.id !== selected) setSelected(selectedRequest.id);
-  }, [selected, selectedRequest]);
 
   return (
     <main className="main">
-      <header className="topbar">
-        <div className="crumbs"><span>Tracking profile</span><ArrowRight size={12} /><strong>{currentHost}</strong></div>
-        <div className="top-actions">
-          <button type="button" className="icon-button" aria-label="Help" data-testid="button-help"><CircleHelp size={15} /></button>
-          <button type="button" className="icon-button" aria-label="Settings" data-testid="button-settings"><Settings2 size={15} /></button>
-          <button type="button" className="icon-button" aria-label="More options" data-testid="button-more"><MoreHorizontal size={16} /></button>
-        </div>
-      </header>
-      <div className="content">
-        {!captureOn && <div className="paused-banner animate-rise"><Pause size={17} /><div style={{ flex: 1 }}><strong>Capture is paused</strong><span>New requests will not be recorded until you resume the session.</span></div><button type="button" className="icon-button" onClick={onToggle} aria-label="Resume capture" data-testid="button-resume-capture"><Play size={14} /></button></div>}
-        <div className="headline-row animate-rise">
-          <div><div className="eyebrow">{liveMode ? 'Live tab / field notes' : 'Session / field notes'}</div><h1>Make the invisible legible.</h1><p className="headline-copy">A quiet readout of what this page asks other companies to know about you.</p></div>
-          <div className="range-picker" role="group" aria-label="Time range">
-            {['1 hour', '24 hours', '7 days'].map((item) => <button type="button" key={item} className={`range-button ${range === item ? 'active' : ''}`} onClick={() => setRange(item)} data-testid={`button-range-${item.replace(' ', '-')}`}>{item}</button>)}
-          </div>
-        </div>
-        <div className="overview-grid">
-          <section className="panel hero-panel animate-rise delay-1">
-            <div className="panel-kicker"><span>Observed activity · {range}</span><span className="live-pill"><span className="live-dot" /> {captureOn ? 'Live' : 'Paused'}</span></div>
-            <div className="metric"><div className="metric-number">{trackingItems.filter((item) => item.status === 'observed').length}</div><div className="metric-label">tracking signals seen</div></div>
-            <div className="metric-foot"><b>{trackingItems.filter((item) => item.status === 'inferable').length} signals inferred</b> from what remote servers can see · details stay local</div>
-            <div className="bar-chart" aria-label="Request activity over time">{bars.map((height, index) => <div key={`${height}-${index}`} className="bar" style={{ height: `${height}%` }} />)}</div>
-            <div className="chart-caption"><span>12:00 AM</span><span>now</span></div>
-          </section>
-          <section className="panel stats-panel animate-rise delay-2">
-            <StatRow icon={EyeOff} name="Page identity" note="URL, title, referrer" value={trackingItems.find((item) => item.id === 'page')?.status === 'observed' ? 'Seen' : '—'} />
-            <StatRow icon={MonitorSmartphone} name="Device profile" note="Agent, screen, capabilities" value={trackingItems.find((item) => item.id === 'agent')?.status === 'observed' ? 'Seen' : '—'} />
-            <StatRow icon={Cookie} name="Identifiers" note="Cookies and persistent IDs" value={trackingItems.find((item) => item.id === 'identity')?.status === 'observed' ? 'Seen' : '—'} />
-            <StatRow icon={MapPin} name="Location" note="Permission-based precision" value={trackingItems.find((item) => item.id === 'location')?.status === 'observed' ? 'Seen' : 'Not seen'} />
-          </section>
-        </div>
-        <div className="section-title-row animate-rise delay-2"><div className="section-title">Tracking profile</div><div className="section-note">select a signal to see how it is exposed</div></div>
-        <div className="animate-rise delay-3"><TrackingProfile items={trackingItems} /></div>
-        <div className="section-title-row animate-rise delay-3"><div className="section-title">Evidence by destination</div><div className="section-note">provider, endpoint, fields, and cookie values</div></div>
-        <div className="animate-rise delay-3"><TrackerEndpointPanel endpoints={trackerEndpoints} /></div>
+      <div className="content evidence-content">
+        <div className="animate-rise"><TrackerEndpointPanel endpoints={trackerEndpoints} /></div>
       </div>
     </main>
   );
 }
 
 function App() {
-  const [captureOn, setCaptureOn] = useState(true);
-  const [page, setPage] = useState('Overview');
   const [liveSnapshot, setLiveSnapshot] = useState<LiveSnapshot['snapshot'] | null>(null);
   const [liveMode, setLiveMode] = useState(false);
 
@@ -803,7 +751,6 @@ function App() {
     setLiveMode(true);
     const refresh = () => runtime.sendMessage({ type: 'getSnapshot' }, (response) => {
       if (!response) return;
-      setCaptureOn(response.enabled);
       setLiveSnapshot(response.snapshot);
     });
     refresh();
@@ -811,19 +758,11 @@ function App() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const toggleCapture = () => {
-    const next = !captureOn;
-    setCaptureOn(next);
-    const runtime = getExtensionRuntime();
-    runtime?.sendMessage({ type: 'setCapture', enabled: next }, () => undefined);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="app-shell">
-          <Sidebar captureOn={captureOn} onToggle={toggleCapture} page={page} onPage={setPage} />
-          <Dashboard captureOn={captureOn} onToggle={toggleCapture} liveSnapshot={liveSnapshot} liveMode={liveMode} />
+        <div className="app-shell evidence-only">
+          <Dashboard liveSnapshot={liveSnapshot} liveMode={liveMode} />
         </div>
         <Toaster />
       </TooltipProvider>
