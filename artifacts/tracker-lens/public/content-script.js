@@ -15,7 +15,21 @@
         title: document.title,
         description,
         forms: document.forms.length,
-        inputs: document.querySelectorAll("input, textarea, select").length
+        inputs: document.querySelectorAll("input, textarea, select").length,
+        device: {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          languages: navigator.languages?.slice(0, 4) || [],
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          screen: `${window.screen.width} × ${window.screen.height} · ${window.devicePixelRatio}x`,
+          colorDepth: `${window.screen.colorDepth}-bit`,
+          hardwareConcurrency: navigator.hardwareConcurrency || null,
+          deviceMemory: navigator.deviceMemory || null,
+          maxTouchPoints: navigator.maxTouchPoints || 0,
+          doNotTrack: navigator.doNotTrack,
+          cookiesEnabled: navigator.cookieEnabled
+        }
       }
     });
   }

@@ -77,6 +77,7 @@ function ensureTab(tabId) {
       tabId,
       capturedAt: Date.now(),
       page: null,
+      pageSignals: [],
       requests: [],
       stats: { total: 0, thirdParty: 0, withCookies: 0, withContext: 0 }
     });
@@ -208,6 +209,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       description: bounded(message.page?.description),
       forms: Number(message.page?.forms || 0),
       inputs: Number(message.page?.inputs || 0),
+      device: message.page?.device || {},
       capturedAt: Date.now()
     };
     session.capturedAt = Date.now();
@@ -219,6 +221,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "pageSignal" && sender.tab?.id !== undefined) {
     const requestId = message.signal?.requestId;
     const session = ensureTab(sender.tab.id);
+    session.pageSignals = [
+      ...(session.pageSignals || []),
+      {
+        name: bounded(message.signal.name, 100),
+        value: bounded(message.signal.value),
+        source: bounded(message.signal.source || "page", 40),
+        capturedAt: Date.now()
+      }
+    ].slice(-100);
     const request = requestId && session.requests.find((item) => item.id === requestId);
     if (request) {
       request.signals.context = [
@@ -246,6 +257,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           tabId,
           capturedAt: Date.now(),
           page: null,
+          pageSignals: [],
           requests: [],
           stats: { total: 0, thirdParty: 0, withCookies: 0, withContext: 0 }
         }

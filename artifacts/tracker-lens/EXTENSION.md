@@ -12,12 +12,18 @@ Tracker Lens is a Manifest V3 Chrome/Edge extension that makes the data leaving 
 
 ## What it observes
 
-- Every network destination and whether it is first- or third-party.
-- URL query parameter names and values.
-- Cookies and selected request headers, including referrer and origin.
-- Form-encoded request bodies where the browser exposes them to `webRequest`.
-- `fetch`, `XMLHttpRequest`, and `sendBeacon` URLs and payload previews.
-- Page context such as title, description, form count, and input count.
+The interface is intentionally tracking-only. It presents a profile of data that can identify or characterize a visitor:
+
+- Public IP visibility (shown as an honest network-level inference because browser extensions cannot read the public IP directly).
+- Browser and device agent details.
+- Screen size, pixel ratio, color depth, CPU/memory capability, and touch support.
+- Language, preferred languages, timezone, and Do Not Track state.
+- Page URL, title, description, form count, and input count.
+- Cookies and identifier names observed in outbound headers.
+- Referrer and origin context.
+- Location permission requests and returned coordinates when a page calls the Geolocation API.
+
+Individual network requests are used internally to collect evidence, but they are not shown in the user-facing readout.
 
 Data is held in the extension service worker's bounded session memory. Turning capture off clears captured data. The extension does not send observations to a remote server.
 

@@ -1,1 +1,2 @@
 - [Tracker Lens privacy boundary](tracker-lens-privacy.md) — capture stays local and bounded; any future sync must be explicit opt-in.
+- [Tracker Lens tracking profile](tracking-profile-surface.md) — show aggregated trackable data categories, not a request-by-request ledger.

@@ -277,6 +277,35 @@ h1 { font-size: clamp(25px, 3vw, 36px); letter-spacing: -.055em; line-height: 1.
 .meta-box { border: 1px solid hsl(var(--border)); padding: 9px; border-radius: 7px; }
 .meta-label { color: hsl(var(--muted-foreground)); font: 9px var(--app-font-mono); display: block; margin-bottom: 5px; }
 .meta-value { font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tracking-profile { padding: 20px; }
+.profile-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 15px; border-bottom: 1px solid hsl(var(--border)); }
+.profile-heading { margin: 0; justify-content: flex-start; gap: 15px; }
+.profile-heading h4 { font-size: 13px; }
+.profile-intro { margin: 6px 0 0; color: hsl(var(--muted-foreground)); font-size: 10px; line-height: 1.55; }
+.profile-legend { display: flex; gap: 11px; color: hsl(var(--muted-foreground)); font: 9px var(--app-font-mono); white-space: nowrap; }
+.profile-legend span { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.legend-dot.observed { background: hsl(var(--primary)); }
+.legend-dot.inferred { background: hsl(var(--accent)); }
+.tracking-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding-top: 14px; }
+.tracking-card { border: 1px solid hsl(var(--border)); border-radius: 9px; background: hsl(var(--background) / .35); overflow: hidden; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.tracking-card:hover, .tracking-card.open { border-color: hsl(var(--primary) / .4); background: hsl(var(--primary) / .035); }
+.tracking-card:hover { transform: translateY(-1px); }
+.tracking-card-button { width: 100%; min-height: 67px; display: flex; align-items: center; gap: 10px; padding: 11px; color: inherit; border: 0; background: transparent; text-align: left; }
+.tracking-icon { width: 31px; height: 31px; border-radius: 8px; flex-shrink: 0; display: grid; place-items: center; }
+.tracking-icon.observed { color: hsl(var(--primary)); background: hsl(var(--primary) / .1); }
+.tracking-icon.inferable { color: hsl(var(--accent-foreground)); background: hsl(var(--accent) / .18); }
+.tracking-icon.not-observed { color: hsl(var(--muted-foreground)); background: hsl(var(--secondary)); }
+.tracking-copy { min-width: 0; flex: 1; }
+.tracking-label { color: hsl(var(--muted-foreground)); font: 9px var(--app-font-mono); text-transform: uppercase; letter-spacing: .055em; }
+.tracking-value { margin-top: 5px; font-size: 11px; font-weight: 750; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tracking-status { align-self: flex-start; padding: 4px 6px; border-radius: 5px; font: 8px var(--app-font-mono); text-transform: uppercase; white-space: nowrap; }
+.tracking-status.observed { color: hsl(var(--primary)); background: hsl(var(--primary) / .1); }
+.tracking-status.inferable { color: hsl(var(--accent-foreground)); background: hsl(var(--accent) / .17); }
+.tracking-status.not-observed { color: hsl(var(--muted-foreground)); background: hsl(var(--secondary)); }
+.tracking-detail { border-top: 1px solid hsl(var(--border)); padding: 10px 12px 11px 52px; background: hsl(var(--secondary) / .38); animation: reveal .2s ease both; }
+.tracking-detail p { color: hsl(var(--muted-foreground)); font-size: 10px; line-height: 1.5; margin: 0 0 6px; }
+.tracking-source { color: hsl(var(--foreground)); font: 9px var(--app-font-mono); }
 .empty-state { padding: 45px 20px; text-align: center; color: hsl(var(--muted-foreground)); }
 .empty-state svg { color: hsl(var(--primary)); margin: 0 auto 12px; }
 .empty-state h3 { color: hsl(var(--foreground)); font-size: 13px; margin: 0 0 6px; }
@@ -314,4 +343,7 @@ h1 { font-size: clamp(25px, 3vw, 36px); letter-spacing: -.055em; line-height: 1.
   .request-layout { gap: 12px; }
   .detail-panel { min-height: 0; }
   .detail-meta { grid-template-columns: 1fr 1fr; }
+  .tracking-grid { grid-template-columns: 1fr; }
+  .profile-header { display: block; }
+  .profile-legend { margin-top: 12px; }
 }

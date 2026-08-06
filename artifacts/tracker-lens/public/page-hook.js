@@ -54,4 +54,22 @@
       return originalBeacon(url, data);
     };
   }
+
+  if (navigator.geolocation) {
+    const originalGetCurrentPosition = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+    navigator.geolocation.getCurrentPosition = function (success, error, options) {
+      report("Location requested", options ? `accuracy=${options.enableHighAccuracy ? "high" : "standard"}` : "standard");
+      return originalGetCurrentPosition(
+        function (position) {
+          report(
+            "Location returned",
+            `lat ${position.coords.latitude.toFixed(4)}, lon ${position.coords.longitude.toFixed(4)}, ±${Math.round(position.coords.accuracy)}m`,
+          );
+          success?.apply(this, arguments);
+        },
+        error,
+        options,
+      );
+    };
+  }
 })();
