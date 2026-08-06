@@ -1,3 +1,4 @@
 - [Tracker Lens privacy boundary](tracker-lens-privacy.md) — capture stays local and bounded; any future sync must be explicit opt-in.
 - [Tracker Lens tracking profile](tracking-profile-surface.md) — show aggregated trackable data categories, not a request-by-request ledger.
 - [Tracker Lens provider evidence](provider-evidence-matching.md) — show host-based provider matches with raw endpoint/cookie evidence and an unclassified fallback.
+- [Tracker Lens popup surface](popup-surface.md) — open in the current page's wider toolbar popup, never a separate tab.

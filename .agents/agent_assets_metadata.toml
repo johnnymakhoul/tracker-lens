@@ -5,5 +5,5 @@ generated = []
 id = "bQNIVyElm8evpauu6CSbN"
 uri = "file://tracker-lens-extension.zip"
 type = "unspecified"
-title = "Tracker Lens — wide evidence-only view"
-description = "Chrome/Edge extension package that opens a wide destination evidence view showing recognized tracking providers, exact endpoints, data fields, and cookie values."
+title = "Tracker Lens — wide in-page popup"
+description = "Chrome/Edge extension package that opens inside the current page's toolbar popup at a wider size, showing only destination evidence, endpoints, data fields, and cookie values."

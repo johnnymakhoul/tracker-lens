@@ -16,7 +16,8 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Open Tracker Lens"
+    "default_title": "Open Tracker Lens",
+    "default_popup": "index.html"
   },
   "content_scripts": [
     {

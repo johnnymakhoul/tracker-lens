@@ -8,7 +8,7 @@ Tracker Lens is a Manifest V3 Chrome/Edge extension that makes the data leaving 
 2. Open `chrome://extensions` or `edge://extensions`.
 3. Enable **Developer mode**.
 4. Choose **Load unpacked** and select `artifacts/tracker-lens/dist/public`.
-5. Pin Tracker Lens and open it on a page with network activity.
+5. Pin Tracker Lens and open it from the toolbar on a page with network activity. It stays in the browser popup; it does not open a separate tab.
 
 ## What it observes
 
